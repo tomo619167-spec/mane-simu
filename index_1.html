@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>よそく家計簿｜一人暮らしのかんたん出費シミュレーター</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --pink:#F9A8C9;--pink-light:#FDE8F3;--pink-dark:#C2587E;
+  --mint:#A8E6CF;--mint-light:#E8F8F2;--mint-dark:#2D8B6F;
+  --peach:#FFD5B4;--peach-light:#FFF3E8;--peach-dark:#B35A1A;
+  --lav:#C4B5F4;--lav-light:#EDE9FD;--lav-dark:#5B3FC1;
+  --sky:#A8D8F0;--sky-light:#E5F4FC;--sky-dark:#1A6A96;
+  --cream:#FFF8F0;--text:#3D3348;--muted:#9B8FAD;--border:#EAE0F5;--bg:#FDFBFF;
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh;}
+.wrap{max-width:480px;margin:0 auto;padding:1.25rem 1rem 4rem;}
+h1{font-size:20px;font-weight:700;color:var(--lav-dark);margin-bottom:4px;}
+.tagline{font-size:13px;color:var(--muted);margin-bottom:1.25rem;}
+.nav{display:flex;gap:8px;margin-bottom:1.5rem;}
+.nav-btn{flex:1;padding:10px 6px;border-radius:50px;border:2px solid var(--border);background:white;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;}
+.nav-btn.active{background:var(--lav);border-color:var(--lav-dark);color:var(--lav-dark);}
+.card{background:white;border:1.5px solid var(--border);border-radius:20px;padding:1.25rem;margin-bottom:1rem;}
+.card-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.875rem;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;font-weight:700;color:var(--muted);}
+.field input,.field select{width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--cream);font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;color:var(--text);outline:none;transition:border .2s;}
+.field input:focus,.field select:focus{border-color:var(--lav-dark);}
+.hint{font-size:11px;color:var(--muted);margin-top:2px;}
+.run-btn{width:100%;padding:14px;border-radius:50px;border:none;background:var(--lav);color:var(--lav-dark);font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:.75rem;transition:all .15s;}
+.run-btn:hover{background:var(--lav-dark);color:white;}
+.run-btn:active{transform:scale(0.98);}
+.reset-btn{width:100%;padding:10px;border-radius:50px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px;}
+.divider{border:none;border-top:1.5px dashed var(--border);margin:1.25rem 0;}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem;}
+.metric{border-radius:16px;padding:.875rem .75rem;text-align:center;}
+.metric.lav{background:var(--lav-light);}
+.metric.mint{background:var(--mint-light);}
+.metric.peach{background:var(--peach-light);}
+.metric.pink{background:var(--pink-light);}
+.metric.sky{background:var(--sky-light);}
+.metric-label{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;line-height:1.4;}
+.metric-val{font-size:16px;font-weight:700;}
+.metric.lav .metric-val{color:var(--lav-dark);}
+.metric.mint .metric-val{color:var(--mint-dark);}
+.metric.peach .metric-val{color:var(--peach-dark);}
+.metric.pink .metric-val{color:var(--pink-dark);}
+.metric.sky .metric-val{color:var(--sky-dark);}
+.brow{display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px dashed var(--border);font-size:13px;}
+.brow:last-child{border-bottom:none;font-weight:700;}
+.brow .bl{color:var(--muted);}
+.bubble{border-radius:16px;padding:.875rem 1.125rem;font-size:13px;line-height:1.75;margin-bottom:1rem;}
+.bubble.lav{background:var(--lav-light);color:var(--lav-dark);}
+.bubble.mint{background:var(--mint-light);color:var(--mint-dark);}
+.bubble.peach{background:var(--peach-light);color:var(--peach-dark);}
+.sub-nav{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap;}
+.sub-btn{padding:7px 14px;border-radius:50px;border:1.5px solid var(--border);background:transparent;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;}
+.sub-btn.active{background:var(--mint);border-color:var(--mint-dark);color:var(--mint-dark);}
+.sc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;}
+.sc-card{border-radius:16px;padding:.875rem;border:1.5px solid var(--border);background:white;text-align:center;}
+.sc-card.hl{border-color:var(--lav-dark);background:var(--lav-light);}
+.sc-card.hl2{border-color:var(--mint-dark);background:var(--mint-light);}
+.sc-title{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;}
+.sc-val{font-size:15px;font-weight:700;color:var(--text);}
+.sc-card.hl .sc-val{color:var(--lav-dark);}
+.sc-card.hl2 .sc-val{color:var(--mint-dark);}
+.sc-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.chart-wrap{position:relative;width:100%;height:240px;margin:1rem 0 .5rem;}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:1rem;}
+.leg-dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:middle;}
+.nisa-link{border-radius:16px;padding:1rem;background:var(--lav-light);border:1.5px solid var(--lav);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:1rem;}
+.nisa-link .desc{font-size:12px;font-weight:700;color:var(--muted);}
+.nisa-link .amount{font-size:16px;font-weight:700;color:var(--lav-dark);}
+.link-btn{padding:9px 16px;border-radius:50px;border:none;background:var(--lav-dark);color:white;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.range-wrap{margin-bottom:1rem;}
+.range-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.range-lbl{font-size:12px;font-weight:700;color:var(--muted);}
+.range-val{font-size:14px;font-weight:700;color:var(--lav-dark);}
+input[type=range]{width:100%;accent-color:var(--lav-dark);height:4px;}
+.nisa-check{background:var(--sky-light);border-radius:16px;padding:1rem;margin-bottom:1rem;}
+.nisa-check-title{font-size:12px;font-weight:700;color:var(--sky-dark);margin-bottom:8px;}
+.nisa-check-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--muted);}
+.nisa-check-row span:last-child{font-weight:700;color:var(--sky-dark);}
+.rate-note{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:1rem;}
+.big-result{text-align:center;padding:1.5rem 1rem;border-radius:20px;background:var(--lav-light);margin-bottom:1rem;}
+.big-result .lbl{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;}
+.big-result .val{font-size:34px;font-weight:700;color:var(--lav-dark);}
+.big-result .sub{font-size:12px;color:var(--muted);margin-top:6px;}
+.prefill-box{border-radius:16px;padding:1rem;background:var(--mint-light);border:1.5px solid var(--mint);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:1rem;}
+.prefill-box .desc{font-size:12px;font-weight:700;color:var(--mint-dark);}
+.prefill-box .amount{font-size:15px;font-weight:700;color:var(--mint-dark);}
+.apply-btn{padding:9px 16px;border-radius:50px;border:none;background:var(--mint-dark);color:white;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>よそく家計簿</h1>
+  <p class="tagline">一人暮らしのかんたん出費シミュレーター</p>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchPage('home')" id="nb-home">収支チェック</button>
+    <button class="nav-btn" onclick="switchPage('invest')" id="nb-invest">投資シミュレーション</button>
+  </div>
+
+  <!-- ===== HOME ===== -->
+  <div id="page-home">
+    <div class="card">
+      <div class="card-title">毎月の収入</div>
+      <div class="grid">
+        <div class="field"><label>手取り月収（万円）</label><input type="number" id="income" value="23" min="10" max="200" step="1"></div>
+        <div class="field"><label>ボーナス年間合計（万円）</label><input type="number" id="bonus" value="40" min="0" max="500" step="5"><span class="hint">手取りベース。なければ0でOK</span></div>
+        <div class="field"><label>いまの年齢</label><input type="number" id="age" value="25" min="18" max="60" step="1"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">固定費（月額・万円）</div>
+      <div class="grid">
+        <div class="field"><label>家賃</label><input type="number" id="rent" value="7" min="0" max="30" step="0.5"><span class="hint">東京平均 7〜8万円</span></div>
+        <div class="field"><label>光熱費</label><input type="number" id="utility" value="1.2" min="0" max="5" step="0.1"><span class="hint">平均 1〜1.5万円</span></div>
+        <div class="field"><label>通信費</label><input type="number" id="comm" value="0.8" min="0" max="3" step="0.1"><span class="hint">平均 0.5〜1万円</span></div>
+        <div class="field"><label>保険・サブスク等</label><input type="number" id="sub" value="0.5" min="0" max="5" step="0.1"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">変動費（月額・万円）</div>
+      <div class="grid">
+        <div class="field"><label>平日の食費</label><input type="number" id="fw" value="3" min="0" max="15" step="0.5"><span class="hint">自炊多め2〜3万、外食多め4〜6万</span></div>
+        <div class="field"><label>土日の食費</label><input type="number" id="fwe" value="1.5" min="0" max="10" step="0.5"><span class="hint">平均 1〜2万円</span></div>
+        <div class="field"><label>交際費・娯楽</label><input type="number" id="social" value="2" min="0" max="15" step="0.5"></div>
+        <div class="field"><label>日用品・服</label><input type="number" id="misc" value="1" min="0" max="10" step="0.5"></div>
+        <div class="field"><label>交通費</label><input type="number" id="trans" value="0.5" min="0" max="5" step="0.5"></div>
+      </div>
+    </div>
+    <button class="run-btn" onclick="simHome()">結果を見る</button>
+    <button class="reset-btn" onclick="resetHome()">リセット</button>
+
+    <div id="home-out" style="display:none;margin-top:1.5rem;">
+      <hr class="divider">
+      <div class="metric-grid">
+        <div class="metric lav"><div class="metric-label">手取り月収</div><div class="metric-val" id="r-inc">-</div></div>
+        <div class="metric sky"><div class="metric-label">ボーナス月換算</div><div class="metric-val" id="r-bon">-</div></div>
+        <div class="metric peach"><div class="metric-label">月間支出</div><div class="metric-val" id="r-exp">-</div></div>
+        <div class="metric mint"><div class="metric-label">月間余剰金</div><div class="metric-val" id="r-sur">-</div></div>
+        <div class="metric pink"><div class="metric-label">年間余剰金</div><div class="metric-val" id="r-ann">-</div></div>
+        <div class="metric lav"><div class="metric-label">貯蓄率</div><div class="metric-val" id="r-rat">-</div></div>
+      </div>
+      <div class="card" style="padding:1rem 1.25rem;">
+        <div class="card-title">支出の内訳</div>
+        <div id="bdown"></div>
+      </div>
+      <hr class="divider">
+      <div class="bubble lav" id="main-insight"></div>
+      <div class="sub-nav">
+        <button class="sub-btn active" onclick="switchSub('save')" id="sb-save">節約シナリオ</button>
+        <button class="sub-btn" onclick="switchSub('inv')" id="sb-inv">投資シナリオ</button>
+        <button class="sub-btn" onclick="switchSub('both')" id="sb-both">節約＋投資</button>
+      </div>
+      <div id="sp-save"><div class="sc-grid" id="save-sc"></div><div class="bubble peach" id="ins-save"></div></div>
+      <div id="sp-inv" style="display:none"><div class="sc-grid" id="inv-sc"></div><div class="bubble mint" id="ins-inv"></div></div>
+      <div id="sp-both" style="display:none"><div class="sc-grid" id="both-sc"></div><div class="bubble lav" id="ins-both"></div></div>
+      <div class="nisa-link" id="nisa-link">
+        <div>
+          <div class="desc">余剰金からNISAに回せる金額</div>
+          <div class="amount" id="nisa-sug">-</div>
+          <div class="desc" id="nisa-sug-sub" style="margin-top:3px;"></div>
+        </div>
+        <button class="link-btn" onclick="goInvest()">投資シミュで試す</button>
+      </div>
+      <div class="card-title">10年後の資産推移</div>
+      <div class="chart-wrap"><canvas id="homeChart"></canvas></div>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#C4B5F4"></span>貯蓄のみ</span>
+        <span><span class="leg-dot" style="background:#A8E6CF"></span>月2万節約</span>
+        <span><span class="leg-dot" style="background:#7F77DD"></span>NISA年利3%</span>
+        <span><span class="leg-dot" style="background:#F9A8C9"></span>節約＋NISA</span>
+      </div>
+      <div class="bubble mint" id="chart-ins"></div>
+    </div>
+  </div>
+
+  <!-- ===== INVEST ===== -->
+  <div id="page-invest" style="display:none;">
+    <div id="prefill-box" style="display:none;" class="prefill-box">
+      <div>
+        <div class="desc">収支シミュから引き継ぎ</div>
+        <div class="amount" id="prefill-desc">-</div>
+      </div>
+      <button class="apply-btn" onclick="applyPrefill()">この金額で設定する</button>
+    </div>
+    <div class="card">
+      <div class="card-title">投資の設定</div>
+      <div class="grid">
+        <div class="field">
+          <label>投資の種類</label>
+          <select id="inv-type" onchange="onTypeChange()">
+            <option value="nisa_tsumitate">つみたて投資枠（NISA）</option>
+            <option value="nisa_growth">成長投資枠（NISA）</option>
+            <option value="nisa_full">NISA満額（両枠）</option>
+            <option value="free">自由設定（課税口座）</option>
+          </select>
+        </div>
+        <div class="field"><label>いまの年齢</label><input type="number" id="inv-age" value="25" min="18" max="70" step="1"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">積立の設定</div>
+      <div class="range-wrap">
+        <div class="range-top"><span class="range-lbl">月額積立</span><span class="range-val" id="rv-m">3万円</span></div>
+        <input type="range" id="inv-m" min="0.5" max="10" step="0.5" value="3" oninput="updSliders()">
+      </div>
+      <div class="range-wrap">
+        <div class="range-top"><span class="range-lbl">運用期間</span><span class="range-val" id="rv-y">30年</span></div>
+        <input type="range" id="inv-y" min="1" max="40" step="1" value="30" oninput="updSliders()">
+      </div>
+      <div class="range-wrap">
+        <div class="range-top"><span class="range-lbl">想定年利</span><span class="range-val" id="rv-r">3%</span></div>
+        <input type="range" id="inv-r" min="1" max="7" step="0.5" value="3" oninput="updSliders()">
+      </div>
+      <div class="rate-note">年利の目安：預金 約0.1% ／ 債券型 1〜2% ／ バランス型 2〜4% ／ 株式インデックス（長期平均） 4〜6%。損失リスクを考慮し、控えめな設定がおすすめです。</div>
+    </div>
+    <div class="nisa-check">
+      <div class="nisa-check-title">NISA枠チェック</div>
+      <div id="nisa-rows"></div>
+    </div>
+    <button class="run-btn" onclick="simInvest()">結果を見る</button>
+    <button class="reset-btn" onclick="resetInvest()">リセット</button>
+
+    <div id="invest-out" style="display:none;margin-top:1.5rem;">
+      <hr class="divider">
+      <div class="big-result">
+        <div class="lbl" id="inv-lbl">運用後の資産</div>
+        <div class="val" id="inv-val">-</div>
+        <div class="sub" id="inv-sub">-</div>
+      </div>
+      <div class="metric-grid">
+        <div class="metric lav"><div class="metric-label">総積立元本</div><div class="metric-val" id="iv-p">-</div></div>
+        <div class="metric mint"><div class="metric-label">運用益</div><div class="metric-val" id="iv-pr">-</div></div>
+        <div class="metric sky"><div class="metric-label">元本比リターン</div><div class="metric-val" id="iv-rt">-</div></div>
+        <div class="metric pink"><div class="metric-label">非課税メリット</div><div class="metric-val" id="iv-tx">-</div></div>
+      </div>
+      <div class="card-title">積立額で比べてみると</div>
+      <div class="sc-grid" id="inv-sc-m"></div>
+      <div class="card-title">年利で比べてみると</div>
+      <div class="sc-grid" id="inv-sc-r"></div>
+      <div class="chart-wrap"><canvas id="invChart"></canvas></div>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#C4B5F4"></span>積立元本</span>
+        <span><span class="leg-dot" style="background:#7F77DD"></span>設定利率で運用</span>
+        <span><span class="leg-dot" style="background:#A8E6CF;opacity:.8"></span>年利5%（参考）</span>
+      </div>
+      <div class="bubble lav" id="inv-ins"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let hChart=null,iChart=null,curSub='save',sharedM=0,sharedAge=25;
+const fmt=n=>Math.round(n).toLocaleString('ja-JP')+'万円';
+const g=id=>parseFloat(document.getElementById(id).value)||0;
+const cInv=(m,r,n)=>{if(m<=0||n<=0)return 0;const mr=r/12;return m*((Math.pow(1+mr,n)-1)/mr);};
+
+function switchPage(p){
+  ['home','invest'].forEach(x=>{
+    document.getElementById('page-'+x).style.display=x===p?'block':'none';
+    document.getElementById('nb-'+x).className='nav-btn'+(x===p?' active':'');
+  });
+}
+function switchSub(t){
+  curSub=t;
+  ['save','inv','both'].forEach(x=>{
+    document.getElementById('sp-'+x).style.display=x===t?'block':'none';
+    document.getElementById('sb-'+x).className='sub-btn'+(x===t?' active':'');
+  });
+}
+function goInvest(){
+  switchPage('invest');
+  const nm=Math.round(Math.min(sharedM,10)*2)/2;
+  if(sharedM>0){
+    document.getElementById('prefill-box').style.display='flex';
+    document.getElementById('prefill-desc').textContent='余剰金 '+fmt(Math.round(sharedM*10)/10)+' から月'+nm+'万円をNISAへ';
+  }
+}
+function applyPrefill(){
+  const nm=Math.round(Math.min(sharedM,10)*2)/2;
+  document.getElementById('inv-m').value=nm;
+  document.getElementById('inv-age').value=sharedAge;
+  updSliders();
+  document.getElementById('prefill-box').style.display='none';
+  simInvest();
+}
+function simHome(){
+  const income=g('income'),bonus=g('bonus'),bonusM=bonus/12;
+  const rent=g('rent'),utility=g('utility'),comm=g('comm'),sub=g('sub');
+  const fw=g('fw'),fwe=g('fwe'),social=g('social'),misc=g('misc'),trans=g('trans');
+  const exp=rent+utility+comm+sub+fw+fwe+social+misc+trans;
+  const sur=income-exp,ann=sur*12+bonus,mSav=ann/12;
+  const rate=income>0?Math.round((ann/(income*12+bonus))*100):0;
+  sharedM=Math.max(mSav,0);sharedAge=g('age');
+  document.getElementById('r-inc').textContent=fmt(income);
+  document.getElementById('r-bon').textContent=fmt(Math.round(bonusM*10)/10);
+  document.getElementById('r-exp').textContent=fmt(exp);
+  const sEl=document.getElementById('r-sur');
+  sEl.textContent=fmt(sur);sEl.style.color=sur>=0?'var(--mint-dark)':'#C0392B';
+  document.getElementById('r-ann').textContent=fmt(ann);
+  const rEl=document.getElementById('r-rat');
+  rEl.textContent=rate+'%';rEl.style.color=rate>=20?'var(--mint-dark)':rate>=10?'var(--lav-dark)':'#C0392B';
+  const items=[['家賃',rent],['光熱費',utility],['通信費',comm],['保険・サブスク',sub],['平日食費',fw],['土日食費',fwe],['交際費・娯楽',social],['日用品・服',misc],['交通費',trans],['合計',exp]];
+  document.getElementById('bdown').innerHTML=items.map(([l,v])=>'<div class="brow"><span class="bl">'+l+'</span><span>'+fmt(v)+'</span></div>').join('');
+  const R=0.03,s2=2,nM=mSav+s2;
+  const b=mSav*120,s=nM*120,iv=cInv(mSav,R,120),bo=cInv(nM,R,120);
+  const di=iv-b,ds=s-b,dbo=bo-b;
+  const ratio=ds>0?Math.round((di/ds)*10)/10:'—';
+  const mi=document.getElementById('main-insight');
+  if(sur<0){mi.textContent='支出が収入を上回っています。まず固定費の見直しをしましょう。';mi.className='bubble peach';}
+  else{mi.innerHTML='10年間そのまま貯めると <strong>'+fmt(b)+'</strong>。月2万節約の効果は <strong>+'+fmt(ds)+'</strong>、同額をNISA（年利3%）で運用すると <strong>+'+fmt(di)+'</strong>。投資は節約の約 <strong>'+ratio+'倍</strong> の効果があります。';mi.className='bubble lav';}
+  document.getElementById('save-sc').innerHTML='<div class="sc-card"><div class="sc-title">今のまま</div><div class="sc-val">'+fmt(b)+'</div></div><div class="sc-card hl2"><div class="sc-title">月2万節約</div><div class="sc-val">'+fmt(s)+'</div><div class="sc-sub">+'+fmt(ds)+'</div></div><div class="sc-card"><div class="sc-title">月1万節約</div><div class="sc-val">'+fmt((mSav+1)*120)+'</div><div class="sc-sub">+'+fmt(120)+'</div></div>';
+  document.getElementById('ins-save').innerHTML='月2万節約しても10年の上積みは <strong>'+fmt(ds)+'</strong>。節約は「守り」の手段です。';
+  document.getElementById('inv-sc').innerHTML='<div class="sc-card"><div class="sc-title">今のまま</div><div class="sc-val">'+fmt(b)+'</div></div><div class="sc-card hl"><div class="sc-title">NISA年利3%</div><div class="sc-val">'+fmt(iv)+'</div><div class="sc-sub">+'+fmt(di)+'</div></div><div class="sc-card"><div class="sc-title">年利2%</div><div class="sc-val">'+fmt(cInv(mSav,0.02,120))+'</div></div><div class="sc-card"><div class="sc-title">年利5%（参考）</div><div class="sc-val">'+fmt(cInv(mSav,0.05,120))+'</div></div>';
+  document.getElementById('ins-inv').innerHTML='生活水準そのままで年利3%運用するだけで <strong>+'+fmt(di)+'</strong>。お金にも働いてもらいましょう。';
+  document.getElementById('both-sc').innerHTML='<div class="sc-card"><div class="sc-title">今のまま</div><div class="sc-val">'+fmt(b)+'</div></div><div class="sc-card"><div class="sc-title">節約のみ</div><div class="sc-val">'+fmt(s)+'</div></div><div class="sc-card"><div class="sc-title">投資のみ</div><div class="sc-val">'+fmt(iv)+'</div></div><div class="sc-card hl"><div class="sc-title">節約＋投資</div><div class="sc-val">'+fmt(bo)+'</div><div class="sc-sub">+'+fmt(dbo)+'</div></div>';
+  document.getElementById('ins-both').innerHTML='節約で元本を増やし、NISAで運用。10年後 <strong>'+fmt(bo)+'</strong>。節約は「投資の燃料」です。';
+  const nm=Math.min(mSav,10);
+  document.getElementById('nisa-sug').textContent=nm>0?'月 '+Math.round(nm*10)/10+' 万円':'余剰金なし';
+  document.getElementById('nisa-sug-sub').textContent=nm>=10?'つみたて投資枠の上限です':'つみたて投資枠は月最大10万円';
+  const ls=[],db=[],ds2=[],di2=[],dbo2=[];
+  for(let m=0;m<=120;m+=3){
+    ls.push(m===0?'今':m%12===0?(m/12)+'年後':'');
+    db.push(Math.round(mSav*m*10)/10);ds2.push(Math.round(nM*m*10)/10);
+    di2.push(Math.round(cInv(mSav,R,m)*10)/10);dbo2.push(Math.round(cInv(nM,R,m)*10)/10);
+  }
+  if(hChart)hChart.destroy();
+  hChart=new Chart(document.getElementById('homeChart'),{type:'line',data:{labels:ls,datasets:[
+    {data:db,borderColor:'#C4B5F4',borderDash:[4,3],fill:false,tension:0.3,pointRadius:0,borderWidth:1.5},
+    {data:ds2,borderColor:'#A8E6CF',fill:false,tension:0.3,pointRadius:0,borderWidth:1.5},
+    {data:di2,borderColor:'#7F77DD',fill:false,tension:0.3,pointRadius:0,borderWidth:2.5},
+    {data:dbo2,borderColor:'#F9A8C9',fill:false,tension:0.3,pointRadius:0,borderWidth:2.5}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>Math.round(v)+'万',font:{size:11}},grid:{color:'rgba(180,160,220,0.15)'}},x:{ticks:{font:{size:10},maxRotation:0},grid:{display:false}}}}});
+  document.getElementById('chart-ins').innerHTML='紫・ピンクの線が時間とともに離れていくのが複利の力。10年後の差は <strong>+'+fmt(di)+'</strong>。早く始めるほど差は大きくなります。';
+  document.getElementById('home-out').style.display='block';
+  switchSub(curSub);
+}
+function resetHome(){
+  const d={income:23,bonus:40,age:25,rent:7,utility:1.2,comm:0.8,sub:0.5,fw:3,fwe:1.5,social:2,misc:1,trans:0.5};
+  Object.keys(d).forEach(k=>document.getElementById(k).value=d[k]);
+  document.getElementById('home-out').style.display='none';
+}
+const NLIM={nisa_tsumitate:{m:10,a:120,l:1800},nisa_growth:{m:20,a:240,l:1200},nisa_full:{m:30,a:360,l:1800},free:{m:99,a:9999,l:99999}};
+function onTypeChange(){
+  const t=document.getElementById('inv-type').value,lim=NLIM[t];
+  const sl=document.getElementById('inv-m');
+  sl.max=t==='free'?30:lim.m;
+  if(parseFloat(sl.value)>parseFloat(sl.max))sl.value=sl.max;
+  updSliders();
+}
+function updSliders(){
+  const m=g('inv-m'),y=g('inv-y'),r=g('inv-r');
+  document.getElementById('rv-m').textContent=Math.round(m*10)/10+'万円';
+  document.getElementById('rv-y').textContent=y+'年';
+  document.getElementById('rv-r').textContent=r+'%';
+  const t=document.getElementById('inv-type').value,lim=NLIM[t];
+  const ann=m*12,total=m*y*12;
+  let html='';
+  if(t!=='free'){
+    html+='<div class="nisa-check-row"><span>年間積立額</span><span>'+Math.round(ann)+'万円　'+(ann<=lim.a?'✅ 枠内':'⚠️ 上限'+lim.a+'万円超')+'</span></div>';
+    html+='<div class="nisa-check-row"><span>生涯枠（上限'+lim.l+'万円）</span><span>予定'+Math.round(total)+'万円　'+(total<=lim.l?'✅ 枠内':'⚠️ 超過')+'</span></div>';
+    html+='<div class="nisa-check-row"><span>運用益課税</span><span>✅ 非課税（NISA）</span></div>';
+  } else {
+    html+='<div class="nisa-check-row"><span>運用益</span><span>約20%課税（特定口座）</span></div>';
+  }
+  document.getElementById('nisa-rows').innerHTML=html;
+}
+function simInvest(){
+  const m=g('inv-m'),years=g('inv-y'),rate=g('inv-r')/100,age=g('inv-age');
+  const t=document.getElementById('inv-type').value,isFree=t==='free';
+  const months=years*12,principal=m*months;
+  const total=cInv(m,rate,months),profit=total-principal;
+  const netProfit=isFree?profit*0.8:profit;
+  const tax=isFree?0:Math.round(profit*0.2);
+  const ratio=principal>0?Math.round((total/principal)*10)/10:0;
+  document.getElementById('inv-lbl').textContent=(age+years)+'歳（'+years+'年後）の資産';
+  document.getElementById('inv-val').textContent=fmt(Math.round(isFree?principal+netProfit:total));
+  document.getElementById('inv-sub').textContent='元本 '+fmt(Math.round(principal))+' ＋ 運用益 '+fmt(Math.round(netProfit));
+  document.getElementById('iv-p').textContent=fmt(Math.round(principal));
+  document.getElementById('iv-pr').textContent=fmt(Math.round(netProfit));
+  document.getElementById('iv-rt').textContent=ratio+'倍';
+  document.getElementById('iv-tx').textContent=isFree?'課税口座（益の約20%）':fmt(tax);
+  const maxM=parseFloat(document.getElementById('inv-m').max);
+  const mas=[1,3,5,10].filter(x=>x<=maxM||isFree);
+  document.getElementById('inv-sc-m').innerHTML=mas.map(ma=>{const tv=cInv(ma,rate,months),isA=Math.round(m*2)===Math.round(ma*2);return '<div class="sc-card '+(isA?'hl':'')+'"><div class="sc-title">月'+ma+'万円</div><div class="sc-val">'+fmt(Math.round(tv))+'</div><div class="sc-sub">元本'+fmt(Math.round(ma*months))+'</div></div>';}).join('');
+  document.getElementById('inv-sc-r').innerHTML=[1,2,3,5].map(ra=>{const tv=cInv(m,ra/100,months),isA=Math.round(rate*100)===ra;return '<div class="sc-card '+(isA?'hl':'')+'"><div class="sc-title">年利'+ra+'%</div><div class="sc-val">'+fmt(Math.round(tv))+'</div></div>';}).join('');
+  const step=Math.max(1,Math.floor(months/40));
+  const ls=[],dP=[],dI=[],dI5=[];
+  for(let mo=0;mo<=months;mo+=step){const yr=mo/12;ls.push(mo===0?'今':mo%12===0&&Number.isInteger(yr)?yr+'年':'');dP.push(Math.round(m*mo*10)/10);dI.push(Math.round(cInv(m,rate,mo)*10)/10);dI5.push(Math.round(cInv(m,0.05,mo)*10)/10);}
+  if(iChart)iChart.destroy();
+  iChart=new Chart(document.getElementById('invChart'),{type:'line',data:{labels:ls,datasets:[
+    {data:dP,borderColor:'#C4B5F4',borderDash:[3,3],fill:true,backgroundColor:'rgba(196,181,244,0.1)',tension:0,pointRadius:0,borderWidth:1.5},
+    {data:dI,borderColor:'#7F77DD',fill:true,backgroundColor:'rgba(127,119,221,0.07)',tension:0.3,pointRadius:0,borderWidth:2.5},
+    {data:dI5,borderColor:'#A8E6CF',fill:false,tension:0.3,pointRadius:0,borderWidth:1.5,borderDash:[5,3]}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>Math.round(v)+'万',font:{size:11}},grid:{color:'rgba(180,160,220,0.15)'}},x:{ticks:{font:{size:10},maxRotation:0},grid:{display:false}}}}});
+  const late=years>10?cInv(m,rate,(years-10)*12):0;
+  document.getElementById('inv-ins').innerHTML='今すぐ始めると'+(age+years)+'歳で <strong>'+fmt(Math.round(total))+'</strong>。10年後に始めると <strong>'+fmt(Math.round(late))+'</strong>（差額 <strong>'+fmt(Math.round(total-late))+'</strong>）。複利において、時間は最大の武器です。';
+  document.getElementById('invest-out').style.display='block';
+}
+function resetInvest(){
+  document.getElementById('inv-type').value='nisa_tsumitate';
+  document.getElementById('inv-m').max=10;document.getElementById('inv-m').value=3;
+  document.getElementById('inv-y').value=30;document.getElementById('inv-r').value=3;
+  document.getElementById('inv-age').value=25;
+  updSliders();document.getElementById('invest-out').style.display='none';
+}
+updSliders();simHome();
+</script>
+</body>
+</html>
